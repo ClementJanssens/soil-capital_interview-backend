@@ -32,6 +32,8 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 use JetBrains\PhpStorm\ArrayShape;
 use Tymon\JWTAuth\Exceptions\TokenExpiredException;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Client\RequestException;
 
 class AuthController extends Controller
 {
@@ -216,7 +218,7 @@ class AuthController extends Controller
     {
         $params = $this->request->all();
 
-        if ($params["language"] === "fr") {
+        if ($params["lang"] === "fr") {
             return response()->json([
                 'language' => "Français"
             ]);
@@ -225,5 +227,20 @@ class AuthController extends Controller
         return response()->json([
             'language' => "English"
         ]);
+    }
+
+    public function getJoke(): JsonResponse
+    {
+        try {
+            $response = Http::get('https://official-joke-api.appspot.com/random_joke');
+
+            $response->throw();
+
+            return response()->json($response->json());
+        } catch (RequestException $e) {
+            return response()->json(['error' => 'Problem fetching the joke.'], $e->response->status());
+        } catch (Exception $e) {
+            return response()->json(['error' => 'Unexpected error.'], 500);
+        }
     }
 }
